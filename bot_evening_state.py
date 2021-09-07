@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from time import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import telebot
 from mono import statistic_for_today, statistic_for_week
@@ -9,7 +9,7 @@ TOKEN = '1959713887:AAH0idwY9L-QHPiAV-8n3xMsgeHKJWCaEf4'
 chat_id = 549537340
 bot = telebot.TeleBot(TOKEN)
 
-today = datetime.now().strftime('%d %B %Y')
+today = (datetime.now() + timedelta(hours=2)).strftime('%d %B %Y')
 
 
 def send_group_statistic():
