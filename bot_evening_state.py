@@ -14,8 +14,8 @@ def send_group_statistic():
     sum_week = statistic_for_week()
 
     mess_to_send = f'''АЛОО
-                    \nСьогодні: {sum_today}
-                    \nЦього тижня: {sum_week}'''
+                    \nСьогодні: {sum_today} грн
+                    \nЦього тижня: {sum_week} грн'''
     bot.send_message(chat_id, mess_to_send)
 
 
