@@ -26,7 +26,6 @@ def take_payments(from_):
 
     resp = requests.get(url=url, headers=headers)
     payments_dict = resp.json()
-    # pprint(payments_dict)
     return payments_dict
 
 
@@ -38,6 +37,9 @@ def statistic_for_today():
     last_day_start_timestamp = str(int(this_day_start.timestamp()))
 
     payments_dict = take_payments(last_day_start_timestamp)
+    payments_dict = [el for el in payments_dict if 'банки' not in el['description']]
+    # pprint(payments_dict)
+
     pay_df = pd.DataFrame(payments_dict)
     spent_amount_day = ceil(pay_df.amount.sum() / 100)
     print(spent_amount_day)
