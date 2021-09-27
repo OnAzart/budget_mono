@@ -29,7 +29,7 @@ def take_payments(from_):
     return payments_dict
 
 
-def statistic_for_today():
+def statistic_for_today(sign: str='+'):
     today = take_now()
     this_day_start = datetime(year=today.year, month=today.month,
                               day=today.day, hour=0, second=0)
@@ -37,8 +37,15 @@ def statistic_for_today():
     last_day_start_timestamp = str(int(this_day_start.timestamp()))
 
     payments_dict = take_payments(last_day_start_timestamp)
+    # getting rid of transfers with banka
     payments_dict = [el for el in payments_dict if 'банки' not in el['description']]
     # pprint(payments_dict)
+
+    if sign == '+':
+        payments_dict = [el for el in payments_dict if el['amount'] >= 0]
+    elif sign == '-':
+        payments_dict = [el for el in payments_dict if el['amount'] < 0]
+
 
     pay_df = pd.DataFrame(payments_dict)
     spent_amount_day = ceil(pay_df.amount.sum() / 100)

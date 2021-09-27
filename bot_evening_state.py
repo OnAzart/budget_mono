@@ -15,17 +15,22 @@ def take_now():
 
 
 def send_group_statistic():
-    sum_today = statistic_for_today()
+    positive_sum_today = statistic_for_today(sign='+')
+    negative_sum_today = statistic_for_today(sign='-')
     sum_week = statistic_for_week()
 
     mess_to_send = f'''💰 {take_now().strftime('%d %B %Y')} 💰
-            Сьогодні: {sum_today} грн
-            Цього тижня: {sum_week} грн'''
-    bot.send_message(chat_id, mess_to_send)
+            *Сьогодні*:
+            Витрати: {negative_sum_today} грн 
+            Надходження: {positive_sum_today} грн
+            
+            *Цього тижня*: {sum_week} грн'''
+    bot.send_message(chat_id, mess_to_send, parse_mode='html')
 
 
 try:
     send_group_statistic()
 except:
+    print('Retry...')
     sleep(60)
     send_group_statistic()
