@@ -4,23 +4,16 @@ import requests
 from datetime import datetime, timedelta
 import pandas as pd
 import os
+from additional_tools import *
 
 
-def take_now():
-    if 'nazartutyn' in os.getcwd():
-        hours_delta = 0
-    else:
-        hours_delta = 3
-    return datetime.now() + timedelta(hours=hours_delta)
-
-
-def take_payments(from_):
+def take_payments(from_=take_start_of_date('week'), token='uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
     today = take_now()
     now = str(int(today.timestamp()))
     account = '0'
 
     url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{now}'
-    headers = {'X-Token': 'uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg',
+    headers = {'X-Token': token,
                'account': '0',
                'from': from_}
 
@@ -29,14 +22,10 @@ def take_payments(from_):
     return payments_dict
 
 
-def statistic_for_today(sign: str='+'):
-    today = take_now()
-    this_day_start = datetime(year=today.year, month=today.month,
-                              day=today.day, hour=0, second=0)
-    print(this_day_start)
-    last_day_start_timestamp = str(int(this_day_start.timestamp()))
+def statistic_for_period(sign: str = ' ', unit='today', token: str = 'uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
+    start_at_timestamp = take_start_of_date(unit=unit)
+    payments_dict = take_payments(start_at_timestamp, token=token)
 
-    payments_dict = take_payments(last_day_start_timestamp)
     # getting rid of transfers with banka
     payments_dict = [el for el in payments_dict if 'банки' not in el['description']]
     # pprint(payments_dict)
@@ -46,29 +35,17 @@ def statistic_for_today(sign: str='+'):
     elif sign == '-':
         payments_dict = [el for el in payments_dict if el['amount'] < 0]
 
-
     pay_df = pd.DataFrame(payments_dict)
+    if pay_df.empty:
+        return '0'
+
     spent_amount_day = ceil(pay_df.amount.sum() / 100)
     print(spent_amount_day)
     # print(pay_df[['amount']].describe())
     return str(spent_amount_day)
 
 
-def statistic_for_week():
-    today = take_now()
-    this_week_start = datetime(year=today.year, month=today.month,
-                               day=(today - timedelta(datetime.today().weekday())).day)
-    # last_week_start = datetime.now() - timedelta(datetime.today().weekday()) - timedelta(hours=datetime.today().hour)
-    print(this_week_start)
-    this_week_start_timestamp = str(int(this_week_start.timestamp()))
-    payments_dict = take_payments(this_week_start_timestamp)
-
-    pay_df = pd.DataFrame(payments_dict)
-    spent_amount_week = ceil(pay_df.amount.sum() / 100)
-    print(spent_amount_week)
-    return str(spent_amount_week)
-
-
 if __name__ == '__main__':
-    spent_day = statistic_for_today()
-    spent_week = statistic_for_week()
+    spent_day = statistic_for_period(unit='today')
+    spent_week = statistic_for_period(unit='week')
+    # spent_week = statistic_for_week()
