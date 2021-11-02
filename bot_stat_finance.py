@@ -39,6 +39,7 @@ def start(message):
 def process_text(message):
     cid = message.chat.id
     user = User.objects.filter(chat_id=cid)[0]
+    print(user.name)
     token = user.monobank_token
 
     msg = message.text
