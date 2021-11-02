@@ -31,14 +31,20 @@ def send_group_statistic(chat_id):
     bot.send_message(chat_id, mess_to_send, parse_mode='html')
 
 
-try:
+def main():
     users = retrieve_users_from_db()
-    for user in users:
-        send_group_statistic(user.chat_id)
+    for i in range(len(users)):
+        cid = users[i].chat_id
+        send_group_statistic(cid)
+        sleep(30)
     print(f'Відправлено статистику для {len(users)}.')
-except:
-    print('Retry...')
-    sleep(60)
-    send_group_statistic()
+    # send big spends separately
 
-# send big spends separately
+
+if __name__ == '__main__':
+    try:
+        main()
+    except:
+        print('Retry...')
+        sleep(60)
+        main()
