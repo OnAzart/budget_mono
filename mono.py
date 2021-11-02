@@ -19,33 +19,48 @@ def take_payments(from_=take_start_of_date('week'), token='uI86nMW0QUfLpztN-089F
 
     resp = requests.get(url=url, headers=headers)
     payments_dict = resp.json()
+    pprint(payments_dict)
     return payments_dict
 
 
 def statistic_for_period(sign: str = ' ', unit='today', token: str = 'uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
     start_at_timestamp = take_start_of_date(unit=unit)
     payments_dict = take_payments(start_at_timestamp, token=token)
+    result_sum = []
 
     # getting rid of transfers with banka
     payments_dict = [el for el in payments_dict if 'банки' not in el['description']]
     # pprint(payments_dict)
 
-    if sign == '+':
-        payments_dict = [el for el in payments_dict if el['amount'] >= 0]
-    elif sign == '-':
-        payments_dict = [el for el in payments_dict if el['amount'] < 0]
+    if '+' in sign:
+        payments_dict_plus = [el for el in payments_dict if el['amount'] > 0]
+        pay_df = pd.DataFrame(payments_dict_plus)
+        if not pay_df.empty:
+            result_sum.append(str(pay_df.amount.sum() / 100))
+        else:
+            result_sum.append('0')
 
-    pay_df = pd.DataFrame(payments_dict)
-    if pay_df.empty:
-        return '0'
+    if '-' in sign:
+        payments_dict_minus = [el for el in payments_dict if el['amount'] < 0]
+        pay_df = pd.DataFrame(payments_dict_minus)
+        if not pay_df.empty:
+            result_sum.append(str(pay_df.amount.sum() / 100))
+        else:
+            result_sum.append('0')
 
-    spent_amount_day = ceil(pay_df.amount.sum() / 100)
-    print(spent_amount_day)
+    if '+' not in sign and '-' not in sign:
+        pay_df = pd.DataFrame(payments_dict)
+        if not pay_df.empty:
+            result_sum.append(str(pay_df.amount.sum() / 100))
+        else:
+            result_sum.append('0')
+
     # print(pay_df[['amount']].describe())
-    return str(spent_amount_day)
+    print(result_sum)
+    return result_sum
 
 
 if __name__ == '__main__':
-    spent_day = statistic_for_period(unit='today')
-    spent_week = statistic_for_period(unit='week')
-    # spent_week = statistic_for_week()
+    # plus, minus = statistic_for_period(unit='today')
+    # print(plus, minus)
+    spent_week = statistic_for_period(unit='week')[0]

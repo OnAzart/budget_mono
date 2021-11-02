@@ -45,13 +45,13 @@ def process_text(message):
     print(msg)
     try:
         if msg == keyboard_list[0]:
-            sum_today = statistic_for_period(unit='today', sign='-', token=token)
+            sum_today = statistic_for_period(unit='today', sign='-', token=token)[0]
             mess_to_send = f'Сьогодні ти витратив {sum_today} грн на якусь дурню.'
         elif msg == keyboard_list[1]:
-            sum_week = statistic_for_period(unit='week', sign='-', token=token)
+            sum_week = statistic_for_period(unit='week', sign='-', token=token)[0]
             mess_to_send = f'Цього тижня ти витратив {sum_week} грн на якусь дурню.'
         elif msg == keyboard_list[2]:
-            sum_month = statistic_for_period(unit='month', sign='-', token=token)
+            sum_month = statistic_for_period(unit='month', sign='-', token=token)[0]
             mess_to_send = f'Цього місяця ти витратив {sum_month} грн на якусь дурню.'
         elif msg == keyboard_list[3]:
             fill_profile(bot, cid)
@@ -61,17 +61,7 @@ def process_text(message):
         bot.send_message(cid, mess_to_send)
     except:
         bot.send_message(cid, 'Зачекай хвилину перед тим як робити запит')
-        sleep(45)
-
-
-def send_group_statistic():
-    sum_today = statistic_for_period(unit='today')
-    sum_week = statistic_for_period(unit='today')
-
-    mess_to_send = f'''💰 {today} 💰
-            Сьогодні: {sum_today} грн
-            Цього тижня: {sum_week} грн'''
-    bot.send_message(549537340, mess_to_send)
+        sleep(60)
 
 
 if __name__ == '__main__':
