@@ -47,19 +47,19 @@ def process_text(message):
     try:
         if msg == keyboard_list[0]:
             res_today = statistic_for_period(unit='today', sign='-', token=token)
-            mess_to_send = f'Сьогодні ти витратив {res_today["negative"]} грн на якусь дурню.' \
-                           f'\nКишенькові: {res_today["negative_pocket"]} грн.' \
-                           f'\nБільші: {res_today["negative_major"]} грн.'
+            mess_to_send = f'Сьогодні ти витратив {res_today.get("negative")} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_today.get("negative_pocket")} грн.' \
+                           f'\nБільші: {res_today.get("negative_major")} грн.'
         elif msg == keyboard_list[1]:
             res_week = statistic_for_period(unit='week', sign='-', token=token)
-            mess_to_send = f'Цього тижня ти витратив {res_week["negative"]} грн на якусь дурню.' \
-                           f'\nКишенькові: {res_week["negative_pocket"]} грн.' \
-                           f'\nБільші: {res_week["negative_major"]} грн.'
+            mess_to_send = f'Цього тижня ти витратив {res_week.get("negative")} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_week.get("negative_pocket")} грн.' \
+                           f'\nБільші: {res_week.get("negative_major")} грн.'
         elif msg == keyboard_list[2]:
             res_month = statistic_for_period(unit='month', sign='-', token=token)
-            mess_to_send = f'Цього місяця ти витратив {res_month["negative"]} грн на якусь дурню.' \
-                           f'\nКишенькові: {res_month["negative_pocket"]} грн.' \
-                           f'\nБільші: {res_month["negative_major"]} грн.'
+            mess_to_send = f'Цього місяця ти витратив {res_month.get("negative")} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_month.get("negative_pocket")} грн.' \
+                           f'\nБільші: {res_month.get("negative_major")} грн.'
         elif msg == keyboard_list[3]:
             # fill_profile(bot, cid)
             mess_to_send = ''
