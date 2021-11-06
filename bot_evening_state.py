@@ -27,10 +27,10 @@ def send_group_statistic(chat_id):
     result_spends_week = statistic_for_period(unit='week')
 
     mess_to_send = f"💰 {'+' if int(float(result_spends['general'])) > 0 else ''}{result_spends['general']} грн за сьогодні 💰" \
-                   f"\nКишенькові Витрати: {result_spends['negative_pocket']} грн" \
-                   f"\nБільші Витрати: {result_spends['negative_major']} грн" \
-                   f"\nНадходження: {result_spends['positive']} грн" \
-                   f"\n\nЗагалом цього тижня: {result_spends_week['general']} грн"
+                   f"\nКишенькові Витрати: {result_spends.get('negative_pocket', 0)} грн" \
+                   f"\nБільші Витрати: {result_spends.get('negative_major',0)} грн" \
+                   f"\nНадходження: {result_spends.get('positive')} грн" \
+                   f"\n\nЗагалом цього тижня: {result_spends_week.get('general')} грн"
     bot.send_message(chat_id, mess_to_send, parse_mode='html')
 
 
