@@ -41,7 +41,6 @@ def main():
         print(users[i].name, cid)
         send_group_statistic(cid)
         update_user_send_time(cid)
-        break
         sleep(60)
     print(f'Відправлено статистику для {len(users)}.')
     # send big spends separately
