@@ -47,6 +47,12 @@ def update_mono_token(cid, token):
     user.save()
 
 
+def update_user_send_time(cid):
+    user = User.objects.filter(chat_id=cid)[0]
+    user.last_send_at = take_now()
+    user.save()
+
+
 def retrieve_users_from_db(): #########
     users = User.objects
     users = [user for user in users if user.monobank_token]
@@ -60,6 +66,7 @@ class User(me.Document):
     chat_id = me.IntField(required=True, unique=True)
     registered_at = me.DateTimeField(required=True)
     monobank_token = me.StringField()
+    last_send_at = me.DateTimeField()
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 from random import randint
 from time import sleep
-from traceback import format_exc
+from traceback import format_exc, print_exc
 from configparser import ConfigParser
 
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
@@ -46,21 +46,29 @@ def process_text(message):
     print(msg)
     try:
         if msg == keyboard_list[0]:
-            sum_today = statistic_for_period(unit='today', sign='-', token=token)[0]
-            mess_to_send = f'Сьогодні ти витратив {sum_today} грн на якусь дурню.'
+            res_today = statistic_for_period(unit='today', sign='-', token=token)
+            mess_to_send = f'Сьогодні ти витратив {res_today["negative"]} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_today["negative_pocket"]} грн.' \
+                           f'\nБільші: {res_today["negative_major"]} грн.'
         elif msg == keyboard_list[1]:
-            sum_week = statistic_for_period(unit='week', sign='-', token=token)[0]
-            mess_to_send = f'Цього тижня ти витратив {sum_week} грн на якусь дурню.'
+            res_week = statistic_for_period(unit='week', sign='-', token=token)
+            mess_to_send = f'Цього тижня ти витратив {res_week["negative"]} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_week["negative_pocket"]} грн.' \
+                           f'\nБільші: {res_week["negative_major"]} грн.'
         elif msg == keyboard_list[2]:
-            sum_month = statistic_for_period(unit='month', sign='-', token=token)[0]
-            mess_to_send = f'Цього місяця ти витратив {sum_month} грн на якусь дурню.'
+            res_month = statistic_for_period(unit='month', sign='-', token=token)
+            mess_to_send = f'Цього місяця ти витратив {res_month["negative"]} грн на якусь дурню.' \
+                           f'\nКишенькові: {res_month["negative_pocket"]} грн.' \
+                           f'\nБільші: {res_month["negative_major"]} грн.'
         elif msg == keyboard_list[3]:
-            fill_profile(bot, cid)
+            # fill_profile(bot, cid)
             mess_to_send = ''
+            pass
         else:
             mess_to_send = "Такої команди не існує."
         bot.send_message(cid, mess_to_send)
-    except:
+    except Exception as e:
+        print(print_exc(e))
         bot.send_message(cid, 'Зачекай хвилину перед тим як робити запит')
         sleep(60)
 
