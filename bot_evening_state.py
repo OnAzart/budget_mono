@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from configparser import ConfigParser
 from time import sleep
+import os
 from datetime import datetime, timedelta
 from traceback import format_exc
 
@@ -8,8 +9,13 @@ import telebot
 from mono import statistic_for_period
 from data import retrieve_users_from_db, Data, update_user_send_time
 
+main_path = os.path.expanduser('~')
+if 'nazar' in os.path.expanduser('~'):
+    main_path = '/Users/nazartutyn/PycharmProjects/budget_mono'
+else:
+    main_path = os.path.expanduser('~') + '/projects/budget_mono'
 config = ConfigParser()
-config.read('tokens.ini')
+config.read(main_path + '/tokens.ini')
 
 TOKEN = config['TG']['token']
 chat_id = 549537340
