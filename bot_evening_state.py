@@ -24,13 +24,13 @@ bot = telebot.TeleBot(TOKEN)
 data = Data()
 
 
-def send_group_statistic(chat_id):
-    result_spends = statistic_for_period(unit='today', sign='+-')
+def send_group_statistic(chat_id, token):
+    result_spends = statistic_for_period(unit='today', sign='+-', token=token)
     # positive_sum_today, negative_sum_today = result_spends['positive']
     # negative_sum_today = statistic_for_period(unit='today', sign='-')
     sleep(10)
     # together_sum_today = str(int(float(positive_sum_today) + float(negative_sum_today)))
-    result_spends_week = statistic_for_period(unit='week')
+    result_spends_week = statistic_for_period(unit='week', token=token)
 
     mess_to_send = f"💰 {'+' if int(float(result_spends['general'])) > 0 else ''}{result_spends['general']} грн за сьогодні 💰" \
                    f"\nКишенькові Витрати: {result_spends.get('negative_pocket', 0)} грн" \
@@ -44,8 +44,9 @@ def main():
     users = retrieve_users_from_db()
     for i in range(len(users)):
         cid = users[i].chat_id  # 549537340
+        mono_token = users[i].monobank_token
         print(users[i].name, cid)
-        send_group_statistic(cid)
+        send_group_statistic(cid, mono_token)
         update_user_send_time(cid)
         sleep(60)
     print(f'Відправлено статистику для {len(users)}.')
