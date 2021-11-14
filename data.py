@@ -3,8 +3,15 @@ import mongoengine as me
 from additional_tools import *
 from configparser import ConfigParser
 
+
+main_path = os.path.expanduser('~')
+if 'nazar' in os.path.expanduser('~'):
+    main_path = '/Users/nazartutyn/PycharmProjects/budget_mono'
+else:
+    main_path = os.path.expanduser('~') + '/projects/budget_mono'
+
 config = ConfigParser()
-config.read('tokens.ini')
+config.read(main_path + '/tokens.ini')
 connection_str = config['Mongo']['host']
 
 
