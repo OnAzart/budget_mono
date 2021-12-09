@@ -7,7 +7,7 @@ import os
 from additional_tools import *
 
 
-def take_payments(from_=take_start_of_date('week'), token='uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
+def take_payments(from_=take_start_of_date('week'), token: str = ''):
     today = take_now()
     now = str(int(today.timestamp()))
     account = '0'
@@ -34,7 +34,7 @@ def divide_spends_by_amount(negative_dict):
     return str(pocket_sum), str(major_sum)
 
 
-def statistic_for_period(sign: str = ' ', unit='today', token: str = 'uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
+def statistic_for_period(sign: str = ' ', unit='today', token: str = ''):
     start_at_timestamp = take_start_of_date(unit=unit)
     payments_dict = take_payments(start_at_timestamp, token=token)
     result_sum = {}
