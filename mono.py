@@ -1,16 +1,13 @@
-from math import ceil
 from pprint import pprint
 import requests
-from datetime import datetime, timedelta
 import pandas as pd
-import os
 from additional_tools import *
 
 
-def take_payments(from_=take_start_of_date('week'), token='uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
-    today = take_now()
-    now = str(int(today.timestamp()))
-    account = '0'
+def take_payments(from_: str = take_start_of_dateunit('week'), token: str = '') -> dict:
+    """ Taking payments for certain date unit."""
+    now = str(int(take_now().timestamp()))
+    account = '0'  # account of user
 
     url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{now}'
     headers = {'X-Token': token,
@@ -23,24 +20,32 @@ def take_payments(from_=take_start_of_date('week'), token='uI86nMW0QUfLpztN-089F
     return payments_dict
 
 
-def divide_spends_by_amount(negative_dict):
-    payments_dict_pocket = [el for el in negative_dict if abs(el['amount']) <= 200*100]
-    payments_dict_major = [el for el in negative_dict if abs(el['amount']) > 200*100]
-    pocket_df = pd.DataFrame(payments_dict_pocket)
-    major_df = pd.DataFrame(payments_dict_major)
+def divide_spends_by_amount(negative_dict: dict) -> tuple:
+    """ Divide spends to major spendings (more that 200 uah) and pocket spends."""
+    paym_pocket_money_dict = [el for el in negative_dict if abs(el['amount']) <= 200*100]
+    paym_major_money_dict = [el for el in negative_dict if abs(el['amount']) > 200*100]  # more that 200 uah
+    pocket_money_df = pd.DataFrame(paym_pocket_money_dict)
+    major_money_df = pd.DataFrame(paym_major_money_dict)
 
-    pocket_sum = pocket_df.amount.sum() / 100 if not pocket_df.empty else 0
-    major_sum = major_df.amount.sum() / 100 if not major_df.empty else 0
+    pocket_sum = pocket_money_df.amount.sum() / 100 if not pocket_money_df.empty else 0
+    major_sum = major_money_df.amount.sum() / 100 if not major_money_df.empty else 0
     return str(pocket_sum), str(major_sum)
 
 
-def statistic_for_period(sign: str = ' ', unit='today', token: str = 'uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg'):
-    start_at_timestamp = take_start_of_date(unit=unit)
+def filter_payments(paym_dict: dict, banka: bool = True) -> dict:
+    # getting rid of transfers with banka
+    if banka:
+        paym_dict = [el for el in paym_dict if 'банки' not in el['description']]
+    return paym_dict
+
+
+def statistic_for_period(sign: str = ' ', unit: str = 'today', token: str = '') -> dict:
+    """ Return statistic for certain period."""
+    start_at_timestamp = take_start_of_dateunit(unit=unit)
     payments_dict = take_payments(start_at_timestamp, token=token)
     result_sum = {}
 
-    # getting rid of transfers with banka
-    payments_dict = [el for el in payments_dict if 'банки' not in el['description']]
+    payments_dict = filter_payments(payments_dict, banka=True)
     # pprint(payments_dict)
 
     if '+' in sign:
@@ -69,14 +74,12 @@ def statistic_for_period(sign: str = ' ', unit='today', token: str = 'uI86nMW0QU
     else:
         result_sum['general'] = '0'
 
-
     # print(pay_df[['amount']].describe())
     print(result_sum)
     return result_sum
 
 
+# if it called directly
 if __name__ == '__main__':
-    # plus, minus = statistic_for_period(unit='today')
-    # print(plus, minus)
     spent_week = statistic_for_period(sign='+-', unit='today')
     print(spent_week)

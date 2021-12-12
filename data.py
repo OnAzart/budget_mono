@@ -1,17 +1,8 @@
-from os import environ
 import mongoengine as me
 from additional_tools import *
-from configparser import ConfigParser
 
 
-main_path = os.path.expanduser('~')
-if 'nazar' in os.path.expanduser('~'):
-    main_path = '/Users/nazartutyn/PycharmProjects/budget_mono'
-else:
-    main_path = os.path.expanduser('~') + '/projects/budget_mono'
-
-config = ConfigParser()
-config.read(main_path + '/tokens.ini')
+config = take_creds()
 connection_str = config['Mongo']['host']
 
 
@@ -41,11 +32,6 @@ def handle_user(**kwargs):
     else:
         user = user[0]
     return user
-
-
-# def add_debt(**kwargs):
-#     dept = Debt(**kwargs)
-#     dept.save()
 
 
 def update_mono_token(cid, token):

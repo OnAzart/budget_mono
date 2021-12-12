@@ -1,17 +1,10 @@
-from random import randint
-from time import sleep
 from traceback import format_exc, print_exc
-from configparser import ConfigParser
-
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
-from telebot import TeleBot
 
 from steps_in_bot import *
 from data import *
 
-config = ConfigParser()
-config.read('tokens.ini')
 
+config = take_creds()
 TOKEN = config['TG']['token']
 bot = TeleBot(TOKEN)
 data = Data()
@@ -21,29 +14,28 @@ today = datetime.now().strftime('%d %B %Y')
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    cid = message.chat.id
     user = handle_user(name=message.from_user.first_name, nickname=message.from_user.username, chat_id=message.chat.id)
 
     msg1 = f"Привіт!) Ти в простому непростому світі, де потрібно слідкувати за всілякими речима." \
            f"Я зможу допомагати тобі в веденні бюджету і відсилати статистику витрат з Монобанку."
-    bot.send_message(cid, msg1)
+    bot.send_message(user.chat_id, msg1)
 
-    bot.send_chat_action(cid, 'typing')
+    bot.send_chat_action(user.chat_id, 'typing')
     sleep(randint(1, 3))
-    fill_profile(bot, cid)
-
-    # print(message.chat.id, message.user.nickname)
+    fill_profile(bot, user.chat_id)
 
 
 @bot.message_handler(content_types=['text'])
 def process_text(message):
     cid = message.chat.id
     user = User.objects.filter(chat_id=cid)[0]
-    print(user.name)
     token = user.monobank_token
 
+    bot.send_chat_action(cid, 'typing')
+    sleep(randint(1, 3))
+
     msg = message.text
-    print(msg)
+    print(user.name, ": ", msg)
     try:
         if msg == keyboard_list[0]:
             res_today = statistic_for_period(unit='today', sign='-', token=token)
@@ -70,6 +62,7 @@ def process_text(message):
     except Exception as e:
         print(print_exc(e))
         bot.send_message(cid, 'Зачекай хвилину перед тим як робити запит')
+        bot.send_chat_action(cid, 'typing')
         sleep(60)
 
 

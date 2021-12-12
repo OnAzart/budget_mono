@@ -1,8 +1,12 @@
-import os
+from configparser import ConfigParser
 from datetime import datetime, timedelta
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from os import getcwd
+from os.path import expanduser, join
+
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 
+# GLOBAL VARIABLES USED IN PROJECT
 keyboard_list = ['За сьогодні', 'За тиждень', 'За місяць', 'Профіль']
 main_markup = ReplyKeyboardMarkup(resize_keyboard=True)
 
@@ -15,15 +19,15 @@ main_markup.add(but1, but2)
 main_markup.add(but3, but4)
 
 
-def take_now():
-    if 'nazartutyn' in os.getcwd():
+def take_now() -> datetime:
+    if 'nazartutyn' in getcwd():
         hours_delta = 0
     else:
         hours_delta = 3
     return datetime.now() + timedelta(hours=hours_delta)
 
 
-def take_start_of_date(unit='today'):
+def take_start_of_dateunit(unit: str = 'today') -> str:
     today = take_now()
     if unit == 'today':
         this_day_start = datetime(year=today.year, month=today.month,
@@ -39,5 +43,13 @@ def take_start_of_date(unit='today'):
         this_month_start = datetime(year=today.year, month=today.month, day=1)
         print(this_month_start)
         return str(int(this_month_start.timestamp()))
-    return None
 
+
+def take_creds() -> ConfigParser:
+    if 'nazar' in expanduser('~'):
+        main_path = '/Users/nazartutyn/PycharmProjects/budget_mono'
+    else:
+        main_path = expanduser('~') + '/projects/budget_mono'
+    config = ConfigParser()
+    config.read(join(main_path, 'tokens.ini'))
+    return config
