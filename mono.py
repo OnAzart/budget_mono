@@ -43,7 +43,7 @@ class MonobankApi:
     def statistic_for_period(self, sign: str = ' ', unit: str = 'today') -> dict:
         """ Return statistic for certain period."""
         start_at_timestamp = take_start_of_dateunit(unit=unit)
-        payments_list = self._take_payments(start_at_timestamp)
+        payments_list = self.take_payments(start_at_timestamp)
         if isinstance(payments_list, dict):
             print(payments_list)
             assert Exception("Wait")

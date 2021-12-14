@@ -26,7 +26,10 @@ class Data:
 class UserTools:
     """ Manage all stuff, related to User, including db """
     def __init__(self, **kwargs):
-        self.user_db = _handle_user(**kwargs)  # return User table object
+        if kwargs['user']:
+            self.user_db = kwargs['user']
+        else:
+            self.user_db = _handle_user(**kwargs)  # return User table object
         self.is_profile_filled = True if self.user_db.monobank_token else False
         self.mono = MonobankApi(self.user_db.monobank_token) if self.is_profile_filled else False
 
