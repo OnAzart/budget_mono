@@ -16,9 +16,10 @@ class ProfilePoll:
                                                        callback=self._acquire_token,
                                                        bot=self.bot)
 
-    def _acquire_token(self, message, **kwargs):
+    def _acquire_token(self, message):
         taken_token = message.text
-        test_data = take_payments(token=taken_token)
+
+        test_data = MonobankApi(token=taken_token).take_payments()
         if isinstance(test_data, dict):
             print(test_data.get('errorDescription', None))
             msg_err = 'Токен не правильний. Спробуй ще раз.'

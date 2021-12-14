@@ -8,7 +8,7 @@ class MonobankApi:
     def __init__(self, token):
         self.token = token
 
-    def _take_payments(self, from_: str = take_start_of_dateunit('week')) -> dict:
+    def take_payments(self, from_: str = take_start_of_dateunit('week')) -> dict:
         """ Taking payments for certain date unit."""
         now = str(int(take_now().timestamp()))
         account = '0'  # account of user
