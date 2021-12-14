@@ -7,9 +7,17 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 
 # GLOBAL VARIABLES USED IN PROJECT
-keyboard_list = ['За сьогодні', 'За тиждень', 'За місяць', 'Профіль']
-main_markup = ReplyKeyboardMarkup(resize_keyboard=True)
+keyboard_dict = {'За сьогодні': {'unit': 'today', 'ukr_str': 'дня'},
+                 'За тиждень': {'unit': 'week', 'ukr_str': 'тижня'},
+                 'За місяць': {'unit': 'month', 'ukr_str': 'місяця'},
+                 'Профіль': "No functionality"}
 
+answer_pattern = 'Цього {time_unit} ти витратив {negative_spends} грн на якусь дурню.' \
+                 '\nКишенькові: {negative_pocket_spends} грн.' \
+                 '\nБільші: {negative_major_spends} грн.'
+
+main_markup = ReplyKeyboardMarkup(resize_keyboard=True)
+keyboard_list = list(keyboard_dict)
 but1 = KeyboardButton(keyboard_list[0])
 but2 = KeyboardButton(keyboard_list[1])
 but3 = KeyboardButton(keyboard_list[2])
