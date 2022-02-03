@@ -7,7 +7,7 @@ from steps_in_bot import *
 from data import *
 
 config = take_creds()
-TOKEN = config['TG']['test_token']
+TOKEN = config['TG']['token']
 bot = TeleBot(TOKEN)
 data = Data()
 
