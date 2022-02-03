@@ -70,14 +70,14 @@ def process_text(message):
             bot.send_message(cid, mess_to_send, reply_markup=main_markup, parse_mode='html')
     except ValueError as ve:
         print(format_exc(ve))
-        bot.send_message(cid, 'Не поспішай. Повтори запит через 1 хв. Друг mono не дозволяє частіше)')
         bot.send_chat_action(cid, 'typing')
-        sleep(60)
+        sleep(3)
+        bot.send_message(cid, 'Не поспішай. Повтори запит через 1 хв. Друг mono не дозволяє частіше)')
     except Exception as e:
         print(format_exc(e))
-        bot.send_message(cid, 'Упс, спробуй через хвилину. Входжу в тонус 👽')
         bot.send_chat_action(cid, 'typing')
-        sleep(60)
+        sleep(3)
+        bot.send_message(cid, 'Упс, спробуй через хвилину. Входжу в тонус 👽')
 
 
 @bot.callback_query_handler(lambda call: True)
@@ -98,6 +98,6 @@ if __name__ == '__main__':
     except Exception:
         print("ERROR. Seems like u need to fix it( ")
         print(format_exc())
-        sleep(3)
+        sleep(30)
         bot.polling(none_stop=True)
         bot.send_message(549537340, format_exc())

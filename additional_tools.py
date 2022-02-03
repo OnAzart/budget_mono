@@ -88,7 +88,7 @@ def form_profile_markup(user_db):
     on_or_off_push_word = 'Виключити' if evn_push else "Включити"
     profile_buttons[1] = profile_buttons[1].format(on_or_off_push_word)
 
-    profile_markup = ReplyKeyboardMarkup()
+    profile_markup = ReplyKeyboardMarkup(resize_keyboard=True)
     cards_but = KeyboardButton(profile_buttons[0])
     delete_token_but = KeyboardButton(profile_buttons[1])
     back_but = KeyboardButton(profile_buttons[2])
