@@ -4,9 +4,10 @@ from traceback import format_exc
 
 import telebot
 
-from additional_tools import take_creds
+from additional_tools import take_creds, keyboard_dict
 from data import retrieve_all_users_from_db, Data, UserTools
 from mono import MonobankApi
+from steps_in_bot import collect_statistic
 
 
 config = take_creds()
@@ -19,17 +20,7 @@ data = Data()
 
 def send_group_statistic(user):
     mono = user.mono
-    result_spends = mono.statistic_for_period(unit='today', sign='+-')
-    sleep(10)
-    # together_sum_today = str(int(float(positive_sum_today) + float(negative_sum_today)))
-    result_spends_week = mono.statistic_for_period(unit='week')
-
-    mess_to_send = f"💰 {'+' if int(float(result_spends['general'])) > 0 else ''}{result_spends['general']} " \
-                   f"грн за сьогодні 💰" \
-                   f"\nКишенькові Витрати: {result_spends.get('negative_pocket', 0)} грн" \
-                   f"\nБільші Витрати: {result_spends.get('negative_major',0)} грн" \
-                   f"\nНадходження: {result_spends.get('positive')} грн" \
-                   f"\n\nЗагалом цього тижня: {result_spends_week.get('general')} грн"
+    mess_to_send = collect_statistic(keyboard_item=keyboard_dict['За сьогодні'], cid=user.user_db.chat_id, mono=mono)
     bot.send_message(user.user_db.chat_id, mess_to_send, parse_mode='html')
 
 
