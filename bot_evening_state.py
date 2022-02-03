@@ -6,7 +6,6 @@ import telebot
 
 from additional_tools import take_creds, keyboard_dict
 from data import retrieve_all_users_from_db, Data, UserTools
-from mono import MonobankApi
 from steps_in_bot import collect_statistic
 
 
@@ -24,14 +23,26 @@ def send_group_statistic(user):
     bot.send_message(user.user_db.chat_id, mess_to_send, parse_mode='html')
 
 
-def main():
+def do_smth():
     users = retrieve_all_users_from_db()
     for i in range(len(users)):
         user_tool = UserTools(user=users[i])
-        send_group_statistic(user_tool)
-        user_tool.update_user_send_time()
-        sleep(60)
-    print(f'Відправлено статистику для {len(users)}.')
+        user_tool.user_db.need_evening_push = True
+        user_tool.user_db.save()
+
+
+def main():
+    users = retrieve_all_users_from_db()
+    send_number = 0
+    for i in range(len(users)):
+        user_tool = UserTools(user=users[i])
+        if user_tool.user_db.need_evening_push:
+            send_group_statistic(user_tool)
+            user_tool.update_user_send_time()
+            send_number += 1
+            sleep(60)
+    bot.send_message(chat_id=549537340, text=f'Відправлено статистику для {send_number} людішок.')
+    print(f'Відправлено статистику для {send_number} людішок.')
     # send big spends separately
 
 

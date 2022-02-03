@@ -41,15 +41,6 @@ main_markup.add(but1, but2)
 main_markup.add(but3, but4)
 
 
-profile_buttons = ['Управління картками', "Видалити токен", "<— Назад"]
-profile_markup = ReplyKeyboardMarkup()
-cards_but = KeyboardButton(profile_buttons[0])
-# delete_token_but = KeyboardButton(profile_buttons[1])
-back_but = KeyboardButton(profile_buttons[2])
-profile_markup.add(cards_but)
-profile_markup.add(back_but)
-
-
 def take_now() -> datetime:
     if 'nazartutyn' in getcwd():
         hours_delta = 0
@@ -89,6 +80,21 @@ def is_at_least_one_card_chosen(cards_data):
     for card in cards_data:
         if card.is_active:
             return True
+
+
+def form_profile_markup(user_db):
+    profile_buttons = ['Управління картками', "{} вечірню статистику", "<— Назад"]
+    evn_push = user_db.need_evening_push
+    on_or_off_push_word = 'Виключити' if evn_push else "Включити"
+    profile_buttons[1] = profile_buttons[1].format(on_or_off_push_word)
+
+    profile_markup = ReplyKeyboardMarkup()
+    cards_but = KeyboardButton(profile_buttons[0])
+    delete_token_but = KeyboardButton(profile_buttons[1])
+    back_but = KeyboardButton(profile_buttons[2])
+    profile_markup.add(cards_but, delete_token_but)
+    profile_markup.add(back_but)
+    return profile_markup, profile_buttons
 
 
 def form_cards_markup(chat_id):

@@ -43,6 +43,11 @@ class UserTools:
         self.user_db.last_send_at = take_now()
         self.user_db.save()
 
+    def change_need_evening_push(self):
+        last_nep = self.user_db.need_evening_push
+        self.user_db.need_evening_push = False if last_nep else True
+        self.user_db.save()
+
     def set_profile_filled(self):
         self.is_profile_filled = True
         self.mono = MonobankApi(self.user_db.monobank_token)
@@ -65,6 +70,7 @@ class User(me.Document):
     registered_at = me.DateTimeField(required=True)
     monobank_token = me.StringField()
     last_send_at = me.DateTimeField()
+    need_evening_push = me.BooleanField(default=True)
 
 
 class Cards(me.Document):

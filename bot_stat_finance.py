@@ -7,7 +7,7 @@ from steps_in_bot import *
 from data import *
 
 config = take_creds()
-TOKEN = config['TG']['token']
+TOKEN = config['TG']['test_token']
 bot = TeleBot(TOKEN)
 data = Data()
 
@@ -50,14 +50,19 @@ def process_text(message):
                     bot.send_message(cid, mess_to_send, parse_mode='html')
                 elif msg == 'Профіль':
                     # fill_profile(bot, cid)
-                    mess_to_send = 'Спробуй змінити активні картки.'
-                    bot.send_message(cid, mess_to_send, reply_markup=profile_markup)
+                    mess_to_send = 'Тут ти маєш змогу змінити свої налаштування профілю.'
+                    bot.send_message(cid, mess_to_send, reply_markup=form_profile_markup(user.user_db)[0])
                 break
         else:
             mess_to_send = "Такої команди не існує."
 
+        profile_markup, profile_buttons = form_profile_markup(user.user_db)
         if msg == profile_buttons[0]:  # cards
             choose_card(bot=bot, chat_id=cid)
+        elif msg == profile_buttons[1]:
+            user.change_need_evening_push()
+            profile_markup, profile_buttons = form_profile_markup(user.user_db)
+            bot.send_message(chat_id=cid, text="Параметри розсилки змінені.", reply_markup=profile_markup)
         elif msg == profile_buttons[-1]:
             mess_to_send = 'Статистику за який період часу ти хочеш дізнатись?'
             bot.send_message(cid, mess_to_send, reply_markup=main_markup)
