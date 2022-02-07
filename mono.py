@@ -1,8 +1,12 @@
 import json
 from pprint import pprint
 import requests
+from os import getcwd
 import pandas as pd
 from additional_tools import *
+
+working_directory = '/home/ubuntu/projects/budget_mono' if not 'nazartutyn' in getcwd() \
+    else '/Users/nazartutyn/PycharmProjects/budget_mono'
 
 
 class MonobankApi:
@@ -34,8 +38,8 @@ class MonobankApi:
         return payments_dict
 
     def _add_categories(self, payments_dict):
-        categories = json.load(open('categories.json', 'r'))
-        wider_categories = json.load(open('wider_categories.json', 'r'))
+        categories = json.load(open(join(working_directory, 'categories.json'), 'r'))
+        wider_categories = json.load(open(join(working_directory, 'wider_categories.json'), 'r'))
         for payment in payments_dict:
             try:
                 mcc = payment['mcc']
@@ -116,6 +120,7 @@ class MonobankApi:
 # if it called directly
 if __name__ == '__main__':
     mono = MonobankApi(token='uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg')
-    mono.take_personal_info()
+    # mono.take_personal_info()
+    mono.statistic_for_period()
     # spent_week = mono.statistic_for_period(sign='+-', unit='week')
     # print(spent_week)
