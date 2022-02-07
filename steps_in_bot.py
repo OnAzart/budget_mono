@@ -46,9 +46,9 @@ class ProfilePoll:
             self.user.set_profile_filled()
 
 
-def choose_card(bot, chat_id='', call=''):
+def choose_card(bot, chat_id='', call='', proceed=True):
     chat_id = chat_id if not call else call.message.chat.id
-    card_markup = form_cards_markup(chat_id)
+    card_markup = form_cards_markup(chat_id, proceed)
     if call:
         msg_id = call.message.message_id
         bot.edit_message_reply_markup(chat_id=chat_id, message_id=msg_id, reply_markup=card_markup)
@@ -57,8 +57,40 @@ def choose_card(bot, chat_id='', call=''):
                               reply_markup=card_markup, chat_id=chat_id)
 
 
-def finish_stage(bot, call):
-    chat_id = call.message.chat.id
+def do_need_an_evening_push(bot, cid):
+    # ask message with markup
+    msg_push = """Чи варто тобі надсилати статистику витрат щовечора?"""
+    but_yes = InlineKeyboardButton(text='Так', callback_data='push;yes;')
+    but_no = InlineKeyboardButton(text='Ні', callback_data='push;no;')
+    markup_push = InlineKeyboardMarkup()
+    markup_push.row(but_yes, but_no)
+    # handle: run data function with result and call value limit
+    bot.send_message(text=msg_push, reply_markup=markup_push, chat_id=cid)
+
+
+def do_need_a_value_limit(bot, cid):
+    # ask message with markup
+    msg_limit = """Ти маєш можливість відключити врахування переказу більше певної суми. 
+Введи суму в гривнях, більше якої не показувати (для прикладу 5000)."""
+    markup_limit = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup_limit.add(KeyboardButton('Іншим разом 😊'))
+    bot.send_message(text=msg_limit, reply_markup=markup_limit, chat_id=cid)
+    bot.register_next_step_handler_by_chat_id(chat_id=cid, bot=bot, callback=handle_value_limit, cid=cid)
+    # handle: if yes — run data function, if no — call finish stage
+
+
+def handle_value_limit(message, bot, cid):
+    value = message.text
+    if value == 'Іншим разом 😊' or not isinstance(value, str):
+        pass
+    elif value.isdigit():
+        user = UserTools(chat_id=cid)
+        user.change_limit_of_value(value)
+    finish_stage(chat_id=cid, bot=bot)
+
+
+def finish_stage(bot, chat_id):
+    # chat_id = call.message.chat.id
     msg = "Клас, тепер я розумію що тобі потрібно 😊" \
           "\n\nДізнавайся статистику витрат і слідкуй за ними." \
           "\n& Go long 💸 "
@@ -68,9 +100,11 @@ def finish_stage(bot, call):
 def collect_statistic(keyboard_item, cid, mono):
     mess_to_send = ''
     res = []
+    user = UserTools(chat_id=cid)
+    limit = user.user_db.limit_value_to_show
     cards_acids = retrieve_all_cards_of_user(cid, active=True)
     for card in cards_acids:
-        res_one = mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id=card._id)
+        res_one = mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id=card._id, limit=limit)
         res_one['type'] = card.type
         res.append(res_one)
         mess_to_send += f'\n\n<b>{card.type.title()} card ({card.card_preview[-6:]}): {int(res_one["general"])} грн</b>' \
@@ -79,7 +113,7 @@ def collect_statistic(keyboard_item, cid, mono):
     if not cards_acids:
         mess_to_send = '\n\n<b>Тепер ти можеш визначати з яких карток слідкувати за витратами.</b>\n' \
                        '<i>(Профіль —> Управління картками)</i>'
-        res.append(mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id='0'))
+        res.append(mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id='0', limit=limit))
     res_df = pd.DataFrame(res)
     print(res_df)
 

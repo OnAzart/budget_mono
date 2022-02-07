@@ -43,10 +43,17 @@ class UserTools:
         self.user_db.last_send_at = take_now()
         self.user_db.save()
 
-    def change_need_evening_push(self):
-        last_nep = self.user_db.need_evening_push
-        self.user_db.need_evening_push = False if last_nep else True
+    def change_need_evening_push(self, value=''):
+        if value == '':
+            last_nep = self.user_db.need_evening_push
+            value = False if last_nep else True
+        self.user_db.need_evening_push = value
         self.user_db.save()
+
+    def change_limit_of_value(self, value):
+        user = User.objects.filter(chat_id=self.user_db.chat_id)[0]
+        user.limit_value_to_show = int(value)
+        user.save()
 
     def set_profile_filled(self):
         self.is_profile_filled = True
@@ -62,6 +69,7 @@ class UserTools:
             card_item.save()
 
 
+
 # TABLE(S) _________________________________________
 class User(me.Document):
     name = me.StringField(required=True)
@@ -71,6 +79,7 @@ class User(me.Document):
     monobank_token = me.StringField()
     last_send_at = me.DateTimeField()
     need_evening_push = me.BooleanField(default=True)
+    limit_value_to_show = me.IntField(default=0, min_value=0)
 
 
 class Cards(me.Document):
@@ -86,8 +95,8 @@ class Cards(me.Document):
 
 def change_activity_of_card(id):
     card_obj = Cards.objects.filter(_id=id)[0]
-    new_status = False if card_obj.is_active else True
-    card_obj.is_active = new_status
+    new_activity = False if card_obj.is_active else True
+    card_obj.is_active = new_activity
     card_obj.save()
 
 

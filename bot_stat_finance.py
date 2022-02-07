@@ -7,7 +7,7 @@ from steps_in_bot import *
 from data import *
 
 config = take_creds()
-TOKEN = config['TG']['token']
+TOKEN = config['TG']['test_token']
 bot = TeleBot(TOKEN)
 data = Data()
 
@@ -50,7 +50,8 @@ def process_text(message):
                     bot.send_message(cid, mess_to_send, parse_mode='html')
                 elif msg == 'Профіль':
                     # fill_profile(bot, cid)
-                    mess_to_send = 'Тут ти маєш змогу змінити свої налаштування профілю.'
+                    # mess_to_send = 'Тут ти маєш змогу змінити свої налаштування профілю.'
+                    mess_to_send = collect_profile_description(user.user_db)
                     bot.send_message(cid, mess_to_send, reply_markup=form_profile_markup(user.user_db)[0])
                 break
         else:
@@ -58,11 +59,13 @@ def process_text(message):
 
         profile_markup, profile_buttons = form_profile_markup(user.user_db)
         if msg == profile_buttons[0]:  # cards
-            choose_card(bot=bot, chat_id=cid)
+            choose_card(bot=bot, chat_id=cid, proceed=False)
         elif msg == profile_buttons[1]:
             user.change_need_evening_push()
             profile_markup, profile_buttons = form_profile_markup(user.user_db)
             bot.send_message(chat_id=cid, text="Параметри розсилки змінені.", reply_markup=profile_markup)
+        elif msg == profile_buttons[2]:
+            do_need_a_value_limit(bot, cid)
         elif msg == profile_buttons[-1]:
             mess_to_send = 'Статистику за який період часу ти хочеш дізнатись?'
             bot.send_message(cid, mess_to_send, reply_markup=main_markup)
@@ -83,13 +86,21 @@ def process_text(message):
 @bot.callback_query_handler(lambda call: True)
 def process_callback(call):
     area, action, data = call.data.split(';')
+    user = UserTools(chat_id=call.message.chat.id)
     if area == 'card':
         if action == 'change':
             change_activity_of_card(data)
             choose_card(bot=bot, call=call)
         elif action == 'done':
-            finish_stage(bot=bot, call=call)
+            if data == 'proceed':
+                do_need_an_evening_push(bot=bot,  cid=user.user_db.chat_id)
+            else:
+                finish_stage(bot, call.message.chat.id)
             return True
+    elif area == 'push':
+        value = True if action == 'yes' else False
+        user.change_need_evening_push(value)
+        do_need_a_value_limit(bot=bot,  cid=user.user_db.chat_id)
 
 
 if __name__ == '__main__':

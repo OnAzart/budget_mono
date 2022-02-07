@@ -67,22 +67,25 @@ class MonobankApi:
         major_sum = major_money_df.amount.sum() / 100 if not major_money_df.empty else 0
         return str(pocket_sum), str(major_sum)
 
-    def _filter_payments(self, paym_dict: dict, banka: bool = True) -> dict:
-        """ Getting rid of transfers with banka """
+    def _filter_payments(self, paym_dict: dict, banka: bool = True, limit: int = 0) -> dict:
+        """ Getting rid of transfers with banka and other filters """
         if banka:
             paym_dict = [el for el in paym_dict if 'банки' not in el['description']]
+        if limit:
+            paym_dict = [el for el in paym_dict if abs(el['amount']) <= limit * 100]
         return paym_dict
 
-    def statistic_for_period(self, sign: str = ' ', unit: str = 'today', account_id: str = '0') -> dict:
+    def statistic_for_period(self, sign: str = ' ', unit: str = 'today', account_id: str = '0', limit: int = 0) -> dict:
         """ Return statistic for certain period."""
         start_at_timestamp = take_start_of_dateunit(unit=unit)
         payments_list = self.take_payments(start_at_timestamp, account=account_id)
         if isinstance(payments_list, dict):
+            print(payments_list)
             error_message = payments_list['error_description']
             raise ValueError(error_message)
         result_sum = {}
 
-        payments_list = self._filter_payments(payments_list, banka=True)
+        payments_list = self._filter_payments(payments_list, banka=True, limit=limit)
         # pprint(payments_list)
 
         if '+' in sign:

@@ -83,21 +83,23 @@ def is_at_least_one_card_chosen(cards_data):
 
 
 def form_profile_markup(user_db):
-    profile_buttons = ['Управління картками', "{} вечірню статистику", "<— Назад"]
+    profile_buttons = ['Управління картками', "{} вечірню статистику", "Змінити ліміт показу", "<— Назад"]
     evn_push = user_db.need_evening_push
     on_or_off_push_word = 'Виключити' if evn_push else "Включити"
     profile_buttons[1] = profile_buttons[1].format(on_or_off_push_word)
 
     profile_markup = ReplyKeyboardMarkup(resize_keyboard=True)
     cards_but = KeyboardButton(profile_buttons[0])
-    delete_token_but = KeyboardButton(profile_buttons[1])
-    back_but = KeyboardButton(profile_buttons[2])
-    profile_markup.add(cards_but, delete_token_but)
+    change_push_but = KeyboardButton(profile_buttons[1])
+    change_limit_but = KeyboardButton(profile_buttons[2])
+    back_but = KeyboardButton(profile_buttons[-1])
+    profile_markup.add(cards_but, change_push_but)
+    profile_markup.add(change_limit_but)
     profile_markup.add(back_but)
     return profile_markup, profile_buttons
 
 
-def form_cards_markup(chat_id):
+def form_cards_markup(chat_id, proceed):
     from data import retrieve_all_cards_of_user
     cards_info = retrieve_all_cards_of_user(chat_id)
     cards_markup = InlineKeyboardMarkup(row_width=1)
@@ -109,6 +111,19 @@ def form_cards_markup(chat_id):
         button = InlineKeyboardButton(text=button_text, callback_data=f"card;change;{id}")
         cards_markup.add(button)
     if is_at_least_one_card_chosen(cards_info):
-        final_button = InlineKeyboardButton(text="Далі —>", callback_data="card;done;")
+        callback_message = "card;done;"
+        if proceed:
+            callback_message += 'proceed'
+        final_button = InlineKeyboardButton(text="Далі —>", callback_data=callback_message)
         cards_markup.add(final_button)
     return cards_markup
+
+
+def collect_profile_description(user_db):
+    limit = user_db.limit_value_to_show
+    do_push = user_db.need_evening_push
+    # monobank_token = user_db.monobank_token
+
+    profile_description = f"Вечірня розсилка: {'✅' if do_push else '❌'}" \
+                          f"\nЛіміт показу: {limit if limit >= 0 else '❌'} грн"
+    return profile_description
