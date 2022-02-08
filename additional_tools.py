@@ -102,6 +102,12 @@ def form_profile_markup(user_db):
 def form_cards_markup(chat_id, proceed):
     from data import retrieve_all_cards_of_user
     cards_info = retrieve_all_cards_of_user(chat_id)
+    if not cards_info:
+        from data import UserTools
+        user = UserTools(chat_id=chat_id)
+        card_data = user.mono.take_personal_info()
+        user.create_cards_in_db(card_data['accounts'])
+        cards_info = retrieve_all_cards_of_user(chat_id)
     cards_markup = InlineKeyboardMarkup(row_width=1)
     for card_info in cards_info:
         # add something if user already have it chosen
