@@ -1,9 +1,9 @@
-7/3# budget_mono
-Telegram bot for receiving daily spendings updates per day.
-
-Additionally, it's able to give you such statistic per day/ week/ month (from start of this time unit, not past 7/30 days).
+# Тільки розумні витрати 🤟 (@budget_govern_bot)
+### Telegram bot for receiving daily spendings updates per day. Easily grabing info per smaller units of time than given at Monobank. [Try it 👈](https://t.me/budget_govern_bot) 
 
 
-Try it: @budget_govern_bot
+***Technoligies***: Python/ pyTelebot/ MongoDB
 
-Works only with Monobank.
+
+
+*Works only with Monobank*
