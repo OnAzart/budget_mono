@@ -5,7 +5,7 @@ from os import getcwd
 import pandas as pd
 from additional_tools import *
 
-working_directory = '/home/ubuntu/projects/budget_mono' if not 'nazartutyn' in getcwd() \
+working_directory = '/home/azureuser/projects/budget_mono' if not 'nazartutyn' in getcwd() \
     else '/Users/nazartutyn/PycharmProjects/budget_mono'
 
 
@@ -21,12 +21,12 @@ class MonobankApi:
         pprint(resp)
         return resp
 
-    def take_payments(self, from_: str = take_start_of_dateunit('week'), account='0') -> dict:
+    def take_payments(self, from_: str = take_start_of_dateunit('week'), to=str(int(take_now().timestamp())), account='0') -> dict:
         """ Taking payments for certain date unit."""
         now = str(int(take_now().timestamp()))
           # account of user
 
-        url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{now}'
+        url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{to}'
         headers = {'X-Token': self.token,
                    'account': '0',
                    'from': from_}
