@@ -3,6 +3,7 @@ from time import sleep
 from traceback import format_exc
 
 import telebot
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from additional_tools import take_creds, keyboard_dict
 from data import retrieve_all_users_from_db, Data, UserTools
@@ -19,8 +20,11 @@ data = Data()
 
 def send_group_statistic(user):
     mono = user.mono
-    mess_to_send = collect_statistic(keyboard_item=keyboard_dict['За сьогодні'], cid=user.user_db.chat_id, mono=mono)
-    bot.send_message(user.user_db.chat_id, mess_to_send, parse_mode='html')
+    mess_to_send, callback_details = collect_statistic(keyboard_item=keyboard_dict['За сьогодні'], cid=user.user_db.chat_id, mono=mono)
+    details_but = InlineKeyboardButton(text='Детальніше', callback_data=callback_details)
+    details_markup = InlineKeyboardMarkup().add(details_but)
+    bot.send_message(user.user_db.chat_id, mess_to_send, parse_mode='html', reply_markup=details_markup)
+    user.update_user_send_time()
 
 
 def do_smth():
