@@ -10,7 +10,7 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMedia
 from additional_tools import main_markup, keyboard_dict, collect_profile_description, form_profile_markup, take_creds
 from steps_in_bot import ProfilePoll, collect_statistic, choose_card, \
     do_need_a_value_limit, do_need_an_evening_push, finish_stage
-from data import Data, UserTools, change_activity_of_card
+from data import data_object, UserTools, change_activity_of_card
 from plot.plots import Plot
 
 config = take_creds()
@@ -119,7 +119,7 @@ def process_callback(call):
     elif area == 'details':
         # cid, from_tmsp, to_tsmp = data.split('-')
         print(data)
-        payments = loads(Data().get_from_redis(data))
+        payments = loads(data_object.get_from_redis(data))
         list_of_paths_to_images = Plot(payments, category=True).get_plots_paths()
         media = [InputMediaPhoto(open(image, 'rb')) for image in list_of_paths_to_images]
         bot.edit_message_reply_markup(message_id=call.message.id, chat_id=call.message.chat.id,

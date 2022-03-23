@@ -7,7 +7,7 @@ from telebot import TeleBot
 
 from additional_tools import mono_inl_markup, form_cards_markup, main_markup, take_start_of_dateunit, take_now, \
     answer_pattern
-from data import UserTools, retrieve_all_cards_of_user, Data
+from data import UserTools, retrieve_all_cards_of_user, data_object
 from mono import MonobankApi
 
 
@@ -145,7 +145,7 @@ def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
                                            positive=round(aggregated_results_df['positive'].sum(), 2))
     mess_to_send = general_mess + mess_to_send
     key = f'{cid}-{from_tsmp}-{to_tsmp}'
-    Data().put_in_redis(key, payments)
+    data_object.put_in_redis(key, payments)
     callback_for_details = f'details;;{key}'
     return mess_to_send, callback_for_details
 
@@ -153,4 +153,4 @@ def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
 if __name__ == '__main__':
     from json import loads
 
-    pays = loads(Data().redis.get('{cid}-{from_tsmp}-{to_tsmp}'))
+    pays = loads(data_object.get_from_redis('{cid}-{from_tsmp}-{to_tsmp}'))
