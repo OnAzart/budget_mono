@@ -1,9 +1,11 @@
-import json
 from pprint import pprint
+from traceback import print_exc
+
 import requests
 from os import getcwd
 import pandas as pd
-from additional_tools import *
+
+from additional_tools import take_now, take_start_of_dateunit
 
 working_directory = '/home/azureuser/projects/budget_mono' if not 'nazartutyn' in getcwd() \
     else '/Users/nazartutyn/PycharmProjects/budget_mono'
@@ -21,12 +23,12 @@ class MonobankApi:
         pprint(resp)
         return resp
 
-    def take_payments(self, from_: str = take_start_of_dateunit('week'), to=str(int(take_now().timestamp())), account='0') -> dict:
+    def take_payments(self, from_: str = take_start_of_dateunit('week'),
+                      to_=str(int(take_now().timestamp())),
+                      account='0') -> dict:
         """ Taking payments for certain date unit."""
-        now = str(int(take_now().timestamp()))
-          # account of user
 
-        url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{to}'
+        url = f'https://api.monobank.ua/personal/statement/{account}/{from_}/{to_}'
         headers = {'X-Token': self.token,
                    'account': '0',
                    'from': from_}
@@ -34,26 +36,25 @@ class MonobankApi:
         resp = requests.get(url=url, headers=headers)
         payments_dict = resp.json()
         self._add_categories(payments_dict)
-        # pprint(payments_dict)
+        pprint(payments_dict)
         return payments_dict
 
     def _add_categories(self, payments_dict):
-        categories = json.load(open(join(working_directory, 'categories.json'), 'r'))
-        wider_categories = json.load(open(join(working_directory, 'wider_categories.json'), 'r'))
+        from data import Category
         for payment in payments_dict:
             try:
                 mcc = payment['mcc']
-                for category in categories:
-                    if mcc in category['mcc']:
-                        payment['category'] = category['name']
-                        print(payment['description'], payment['category'])
-
-                for wider_category in wider_categories:
-                    if str(mcc) in wider_category['mcc']:
-                        payment['wider_category'] = wider_category['shortDescription']
-                        print(payment['description'], payment['wider_category'])
-            except Exception:
-                print(payment)
+                wider_category = Category.objects.filter(mcc=mcc)
+                if wider_category:
+                    wider_category = wider_category[0]
+                    payment['category'] = wider_category['description']
+                    payment['wider_category'] = wider_category['shortDescription']
+                else:
+                    payment['category'] = None
+                    payment['wider_category'] = None
+            except Exception as e:
+                print_exc()
+                print('problem in :', payment)
                 continue
 
     def _divide_spends_by_amount(self, negative_list: list) -> tuple:
@@ -75,17 +76,25 @@ class MonobankApi:
             paym_dict = [el for el in paym_dict if abs(el['amount']) <= limit * 100]
         return paym_dict
 
-    def statistic_for_period(self, sign: str = ' ', unit: str = 'today', account_id: str = '0', limit: int = 0) -> dict:
+    def statistic_for_period(self, sign: str = ' ', unit: str = 'today', account_id: str = '0', limit: int = 0,
+                             from_: str = '', to_: str = ''):
         """ Return statistic for certain period."""
-        start_at_timestamp = take_start_of_dateunit(unit=unit)
-        payments_list = self.take_payments(start_at_timestamp, account=account_id)
+        if not all([from_, to_]):
+            result_sum = {'start_timestamp': take_start_of_dateunit(unit=unit),
+                          'end_timestamp': str(int(take_now().timestamp()))}
+        else:
+            result_sum = {'start_timestamp': from_,
+                          'end_timestamp': to_}
+        payments_list = self.take_payments(from_=result_sum['start_timestamp'],
+                                           to_=result_sum['end_timestamp'],
+                                           account=account_id)
         if isinstance(payments_list, dict):
             print(payments_list)
             error_message = payments_list['error_description']
             raise ValueError(error_message)
-        result_sum = {}
 
         payments_list = self._filter_payments(payments_list, banka=True, limit=limit)
+        list(map(lambda payment: payment.update({'account_id': account_id}), payments_list))
         # pprint(payments_list)
 
         if '+' in sign:
@@ -93,7 +102,6 @@ class MonobankApi:
             pay_df = pd.DataFrame(payments_dict_plus)
             if not pay_df.empty:
                 result_sum['positive'] = float(str(pay_df.amount.sum() / 100))
-
             else:
                 result_sum['positive'] = 0
 
@@ -117,12 +125,12 @@ class MonobankApi:
 
         # print(pay_df[['amount']].describe())
         print(result_sum)
-        return result_sum
+        return result_sum, payments_list
 
 
 # if it called directly
 if __name__ == '__main__':
-    mono = MonobankApi(token='uI86nMW0QUfLpztN-089F1kO8Ui36xez7XonaqX-RJBg')
+    mono = MonobankApi(token='')
     # mono.take_personal_info()
     mono.statistic_for_period()
     # spent_week = mono.statistic_for_period(sign='+-', unit='week')

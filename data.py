@@ -1,27 +1,62 @@
+from json import dumps
+
 import mongoengine as me
+from redis import Redis
 from typing import List
-from additional_tools import *
+from additional_tools import take_creds, take_now
 from mono import MonobankApi
 
 config = take_creds()
-connection_str = config['Mongo']['host']
 
 
 class Data:
     """ Manage MongoDB connection """
-
     def __init__(self):
-        self.connect()
+        self.redis = None
+        self.mongo = None
+        self._connect_mongo()
+        self._connect_redis()
 
-    def connect(self):
-        me.connect(host=connection_str, alias='default')
+    def _connect_mongo(self):
+        mongo_connection_str = config['Mongo']['host']
+        self.mongo = me.connect(host=mongo_connection_str, alias='default')
         print("connection success ")
+
+    def _connect_redis(self):
+        redis_connection_str = config['Redis']['host']
+        redis_password = config['Redis']['password']
+        self.redis = Redis(host=redis_connection_str, port=12930,
+                           password=redis_password, decode_responses=True)
+
+    def get_redis_connection(self):
+        return self.redis
+
+    def get_mongo_connection(self):
+        return self.mongo
+
+    def get_from_redis(self, key):
+        try:
+            return self.redis.get(key)
+        except:
+            self._connect_redis()
+            return self.redis.get(key)
+
+    def put_in_redis(self, key, value):
+        try:
+            self.redis.set(key, dumps(value))
+        except:
+            self._connect_redis()
+            self.redis.set(key, dumps(value))
 
     def disconnect(self):
         me.disconnect(alias='default')
+        self.redis.close()
 
     def __delete__(self, instance):
         self.disconnect()
+
+
+data_object = Data()
 
 
 class UserTools:
@@ -68,6 +103,8 @@ class UserTools:
             card_item = Cards(**right_card)
             card_item.save()
 
+    def is_minute_passed(self):
+        return (take_now() - self.user_db.last_send_at).total_seconds() > 59
 
 
 # TABLE(S) _________________________________________
@@ -90,7 +127,18 @@ class Cards(me.Document):
     user = me.ReferenceField(required=True, document_type=User)
     is_active = me.BooleanField(default=True, required=True)
 
-# ___________________________________________________
+
+class Category(me.Document):
+    mcc = me.IntField(required=True)
+    shortDescription = me.StringField()
+    fullDescription = me.StringField()
+    type = me.StringField()
+    description = me.StringField(required=True)
+    meta = {
+        'indexes': ['mcc']
+    }
+
+    # ___________________________________________________
 
 
 def change_activity_of_card(id):

@@ -1,9 +1,14 @@
-from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+from json import dumps
 
-from mono import *
-from data import UserTools, retrieve_all_cards_of_user
-from bot_stat_finance import TeleBot
-from additional_tools import mono_inl_markup
+import pandas as pd
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, ReplyKeyboardMarkup, \
+    KeyboardButton
+from telebot import TeleBot
+
+from additional_tools import mono_inl_markup, form_cards_markup, main_markup, take_start_of_dateunit, take_now, \
+    answer_pattern
+from data import UserTools, retrieve_all_cards_of_user, Data
+from mono import MonobankApi
 
 
 class ProfilePoll:
@@ -16,12 +21,14 @@ class ProfilePoll:
         self.fill_profile()
 
     def fill_profile(self):
-        self.bot.send_sticker(self.chat_id, data='CAACAgIAAxkBAAEDzAZh-5nUeO5cHSA4NS1B8OMvUMMVvgACfgADwZxgDAsUf929Iv3zIwQ')
+        self.bot.send_sticker(self.chat_id,
+                              data='CAACAgIAAxkBAAEDzAZh-5nUeO5cHSA4NS1B8OMvUMMVvgACfgADwZxgDAsUf929Iv3zIwQ')
         msg1 = """Можливість дивитись статистику твоїх витрат за останній місяць з’являється завдяки токену від <b>Monobank</b>.
 
 З цим токеном я <b>НЕ зможу маніпулювати</b> коштами, а <b>лише спостерігати</b> за ними та інформувати тебе.
 <i>Інформація про ваші витрати не зберігається нами, а постійно стягується у Монобанку.</i>"""
-        self.bot.send_message(self.chat_id, text=msg1, reply_markup=ReplyKeyboardRemove(selective=False), parse_mode='html')
+        self.bot.send_message(self.chat_id, text=msg1, reply_markup=ReplyKeyboardRemove(selective=False),
+                              parse_mode='html')
 
         msg2 = 'Дізнайся та активуй свій токен, натиснувши на кнопку, а потім відправ його мені в чат 👇'
         self.bot.send_message(self.chat_id, text=msg2, reply_markup=mono_inl_markup)
@@ -54,7 +61,7 @@ def choose_card(bot, chat_id='', call='', proceed=True):
         bot.edit_message_reply_markup(chat_id=chat_id, message_id=msg_id, reply_markup=card_markup)
     else:
         bot.send_message(text='Витрати з яких карток ти хочеш відслідковувати?',
-                              reply_markup=card_markup, chat_id=chat_id)
+                         reply_markup=card_markup, chat_id=chat_id)
 
 
 def do_need_an_evening_push(bot, cid):
@@ -97,30 +104,53 @@ def finish_stage(bot, chat_id):
     bot.send_message(chat_id=chat_id, text=msg, reply_markup=main_markup)
 
 
-def collect_statistic(keyboard_item, cid, mono):
+def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
+    if not mono:
+        mono = UserTools(cid=cid).mono
+    if not all([from_tmsp, to_tsmp]):
+        from_tsmp = take_start_of_dateunit(unit=keyboard_item['unit'])
+        to_tsmp = str(int(take_now().timestamp()))
     mess_to_send = ''
-    res = []
+    aggregated_results = []
+    payments = []
     user = UserTools(chat_id=cid)
     limit = user.user_db.limit_value_to_show
-    cards_acids = retrieve_all_cards_of_user(cid, active=True)
-    for card in cards_acids:
-        res_one = mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id=card._id, limit=limit)
-        res_one['type'] = card.type
-        res.append(res_one)
-        mess_to_send += f'\n\n<b>{card.type.title()} card ({card.card_preview[-6:]}): {int(res_one["general"])} грн</b>' \
-                        + answer_pattern.format(negative_spends=round(res_one['negative'], 2),
-                                                positive=round(res_one['positive'], 2))
-    if not cards_acids:
+
+    cards_of_user = retrieve_all_cards_of_user(cid, active=True)
+    for card in cards_of_user:
+        aggregated_res_one, payments_one = mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-',
+                                                                     account_id=card._id, limit=limit,
+                                                                     from_=from_tsmp, to_=to_tsmp)
+        aggregated_res_one['type'] = card.type
+        aggregated_results.append(aggregated_res_one)
+        payments.extend(payments_one)
+        mess_to_send += f'\n\n<b>{card.type.title()} card ({card.card_preview[-6:]}): {int(aggregated_res_one["general"])} грн</b>' \
+                        + answer_pattern.format(negative_spends=round(aggregated_res_one['negative'], 2),
+                                                positive=round(aggregated_res_one['positive'], 2))
+    if not cards_of_user:
         mess_to_send = '\n\n<b>Тепер ти можеш визначати з яких карток слідкувати за витратами.</b>\n' \
                        '<i>(Профіль —> Управління картками)</i>'
-        res.append(mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-', account_id='0', limit=limit))
-    res_df = pd.DataFrame(res)
-    print(res_df)
+        aggregated_res_one, payments_one = mono.statistic_for_period(unit=keyboard_item['unit'], sign='+-',
+                                                                     account_id='0', limit=limit)
+        payments.extend(payments_one)
+        aggregated_results.append(aggregated_res_one)
+    aggregated_results_df = pd.DataFrame(aggregated_results)
+    print(aggregated_results_df)
 
     general_mess = "{smile} {general_spends} {time_unit}".format(smile=keyboard_item['smile'],
-                                                                 general_spends=int(res_df['general'].sum()),
+                                                                 general_spends=int(
+                                                                     aggregated_results_df['general'].sum()),
                                                                  time_unit=keyboard_item['ukr_str']) \
-                   + answer_pattern.format(negative_spends=round(res_df['negative'].sum(), 2),
-                                           positive=round(res_df['positive'].sum(), 2))
+                   + answer_pattern.format(negative_spends=round(aggregated_results_df['negative'].sum(), 2),
+                                           positive=round(aggregated_results_df['positive'].sum(), 2))
     mess_to_send = general_mess + mess_to_send
-    return mess_to_send
+    key = f'{cid}-{from_tsmp}-{to_tsmp}'
+    Data().put_in_redis(key, payments)
+    callback_for_details = f'details;;{key}'
+    return mess_to_send, callback_for_details
+
+
+if __name__ == '__main__':
+    from json import loads
+
+    pays = loads(Data().redis.get('{cid}-{from_tsmp}-{to_tsmp}'))
