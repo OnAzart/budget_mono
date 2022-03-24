@@ -7,9 +7,6 @@ import pandas as pd
 
 from additional_tools import take_now, take_start_of_dateunit
 
-working_directory = '/home/azureuser/projects/budget_mono' if not 'nazartutyn' in getcwd() \
-    else '/Users/nazartutyn/PycharmProjects/budget_mono'
-
 
 class MonobankApi:
     def __init__(self, token):

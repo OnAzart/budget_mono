@@ -1,5 +1,3 @@
-from json import dumps
-
 import pandas as pd
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, ReplyKeyboardMarkup, \
     KeyboardButton

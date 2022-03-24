@@ -1,8 +1,9 @@
 import pandas as pd
 import matplotlib as mp
 import matplotlib.pyplot as plt
-from os import getcwd
 from os.path import join
+
+from additional_tools import working_directory
 
 
 class Plot:
@@ -81,7 +82,7 @@ class Plot:
             plt.annotate(str(int(percentage)) + '%', xy=(width + 1, rect.get_y() + height / 2),
                          color='black', ha='left', va='center')
 
-        path_to_save_category = join(getcwd(), 'plot/category_week_final.png')
+        path_to_save_category = join(working_directory, 'plot/category_week_final.png')
         plt.savefig(path_to_save_category)
         # plt.show()
         plt.close()
@@ -99,7 +100,7 @@ class Plot:
 
         plt.xticks(rotation=20)
 
-        path_to_save_weekday_to_time = join(getcwd(), 'plot/weekday_time_scatter.png')
+        path_to_save_weekday_to_time = join(working_directory, 'plot/weekday_time_scatter.png')
         plt.savefig(path_to_save_weekday_to_time)
         plt.show()
         plt.close()

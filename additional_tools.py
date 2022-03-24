@@ -8,6 +8,9 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 
 # GLOBAL VARIABLES USED IN PROJECT
 
+working_directory = '/home/azureuser/projects/budget_mono' if not 'nazartutyn' in getcwd() \
+    else '/Users/nazartutyn/PycharmProjects/budget_mono'
+
 keyboard_dict = {'За сьогодні': {'unit': 'today', 'ukr_str': 'cьогодні', 'smile': '🌝'},
                  'За тиждень': {'unit': 'week', 'ukr_str': 'з початку тижня', 'smile': '🌛'},
                  'За місяць': {'unit': 'month', 'smile': '🌚',
