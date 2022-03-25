@@ -14,7 +14,7 @@ from data import data_object, UserTools, change_activity_of_card
 from plot.plots import Plot
 
 config = take_creds()
-TOKEN = config['TG']['test_token']
+TOKEN = config['TG']['token']
 bot = TeleBot(TOKEN)
 
 today = datetime.now().strftime('%d %B %Y')
