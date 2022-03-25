@@ -154,7 +154,7 @@ class Plot:
         month = grouped_payment_df.date.astype('datetime64').dt.strftime('%B')[0]
         grouped_payment_df['day_number'] = grouped_payment_df['date'].astype('datetime64').dt.strftime('%-d')
         grouped_payment_df.drop(columns='date', inplace=True)
-        grouped_payment_df.plot(kind='area', x='day_number', y='amount', color="dodgerblue", alpha=.5, legend=None)
+        grouped_payment_df.plot(kind='area', x='day_number', y='amount', stacked=False, color="dodgerblue", alpha=.5, legend=None)
         plt.tight_layout()
         plt.title('Статистика витрат за днями місяця', fontsize=14, fontweight='black', color='#333F4B')
         plt.xlabel(f'Дні місяця "{month}"', fontsize=11, fontweight='black', color='#333F4B')
