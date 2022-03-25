@@ -7,13 +7,15 @@ from additional_tools import working_directory
 
 
 class Plot:
-    def __init__(self, payments, category=False, weekday_to_time=True):
+    def __init__(self, payments, category=False, weekday_to_time=False, area_plot=False):
         self.payments_df = self.produce_detailed_statistic(payments)
-        self.images = {'category': None, 'weekday_to_time': None}
+        self.images = {'category': None, 'weekday_to_time': None, 'area_plot': None}
         if category:
             self.category_bar_plot()
         if weekday_to_time:
             self.weekday_to_time_scatter_plot()
+        if area_plot:
+            self.area_plot(area_plot)
 
     def produce_detailed_statistic(self, pays):
         payments_df = pd.DataFrame(pays)
@@ -67,8 +69,8 @@ class Plot:
         rect1 = plt.barh(grouped_by_category_df.index, grouped_by_category_df['sum_spent'],
                          color=color_map(data_normalizer(grouped_by_category_df['sum_spent'].tolist())))
 
-        plt.title('Категорії')
-        plt.xlabel('Витрачено (грн)', fontsize=15, fontweight='black', color='#333F4B')
+        plt.title('Категорії', fontsize=13, fontweight='black', color='#333F4B')
+        plt.xlabel('Витрачено (грн)', fontsize=11, fontweight='black', color='#333F4B')
         # plt.ylabel('')
         plt.tight_layout()
         plt.gca().spines['right'].set_color('none')
@@ -84,7 +86,7 @@ class Plot:
 
         path_to_save_category = join(working_directory, 'plot/category_week_final.png')
         plt.savefig(path_to_save_category)
-        # plt.show()
+        plt.show()
         plt.close()
         self.images['category'] = path_to_save_category
 
@@ -106,5 +108,66 @@ class Plot:
         plt.close()
         self.images['weekday_to_time'] = path_to_save_weekday_to_time
 
+    def area_plot(self, dateunit='day'):
+        dateunit_functions = {'today': self.daily_area_plot, 'week': self.weekly_area_plot, 'month': self.monthly_area_plot}
+        right_function = dateunit_functions[dateunit]
+        self.images['area_plot'] = right_function()
+
+    def daily_area_plot(self):
+        plt.style.use('fivethirtyeight')
+        grouped_payment_df = self.payments_df.groupby(by='hour').agg({'amount': 'sum'})
+        grouped_payment_df['amount'] = grouped_payment_df['amount'] * -1
+        grouped_payment_df.plot(kind='area', stacked=False, color="orange", alpha=.5, legend=None)
+
+        plt.tight_layout()
+        plt.title('Статистика витрат за годинами', fontsize=14, fontweight='black', color='#333F4B')
+        plt.xlabel('Година', fontsize=11, fontweight='black', color='#333F4B')
+        plt.ylabel('Витрачено', fontsize=11, fontweight='black', color='#333F4B')
+
+        path_to_save_area_days = join(working_directory, 'plot/area_day.png')
+        plt.savefig(path_to_save_area_days)
+        plt.show()
+        plt.close()
+        return path_to_save_area_days
+
+    def weekly_area_plot(self):
+        plt.style.use('fivethirtyeight')
+        grouped_payment_df = self.payments_df.groupby(by='date').agg({'amount': 'sum'})
+        grouped_payment_df.reset_index(inplace=True)
+        grouped_payment_df['amount'] = grouped_payment_df['amount'] * -1
+        grouped_payment_df['day_of_week'] = grouped_payment_df.date.astype('datetime64').dt.strftime('%A')
+        grouped_payment_df.drop(columns='date', inplace=True)
+        grouped_payment_df.plot(kind='area', x='day_of_week', y='amount', stacked=False, color="green", alpha=.5, legend=None)
+        plt.tight_layout()
+        plt.title('Статистика витрат за днями', fontsize=14, fontweight='black', color='#333F4B')
+        plt.xlabel('День тижня', fontsize=11, fontweight='black', color='#333F4B')
+        plt.ylabel('Витрачено', fontsize=11, fontweight='black', color='#333F4B')
+
+        path_to_save_area_days = join(working_directory, 'plot/area_week.png')
+        plt.savefig(path_to_save_area_days)
+        # plt.show()
+        plt.close()
+        return path_to_save_area_days
+
+    def monthly_area_plot(self):
+        plt.style.use('fivethirtyeight')
+        grouped_payment_df = self.payments_df.groupby(by='date').agg({'amount': 'sum'})
+        grouped_payment_df.reset_index(inplace=True)
+        month = grouped_payment_df.date.astype('datetime64').dt.strftime('%B')[0]
+        grouped_payment_df['amount'] = grouped_payment_df['amount'].abs()
+        grouped_payment_df['day_number'] = grouped_payment_df['date'].astype('datetime64').dt.strftime('%-d')
+        grouped_payment_df.drop(columns='date', inplace=True)
+        grouped_payment_df.plot(kind='area', x='day_number', y='amount', color="dodgerblue", alpha=.5, legend=None)
+        plt.tight_layout()
+        plt.title('Статистика витрат за днями місяця', fontsize=14, fontweight='black', color='#333F4B')
+        plt.xlabel(f'Дні місяця "{month}"', fontsize=11, fontweight='black', color='#333F4B')
+        plt.ylabel('Витрачено', fontsize=11, fontweight='black', color='#333F4B')
+
+        path_to_save_area_days = join(working_directory, 'plot/area_month.png')
+        plt.savefig(path_to_save_area_days)
+        # plt.show()
+        plt.close()
+        return path_to_save_area_days
+
     def get_plots_paths(self):
-        return self.images.values()
+        return list(filter(lambda x: x, self.images.values()))

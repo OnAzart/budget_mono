@@ -144,11 +144,13 @@ def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
     mess_to_send = general_mess + mess_to_send
     key = f'{cid}-{from_tsmp}-{to_tsmp}'
     data_object.put_in_redis(key, payments)
-    callback_for_details = f'details;;{key}'
+    callback_for_details = f'details;;{key};{keyboard_item["unit"]}'
     return mess_to_send, callback_for_details
 
 
 if __name__ == '__main__':
     from json import loads
-
+    from data import data_object
+    from plot.plots import Plot
     pays = loads(data_object.get_from_redis('{cid}-{from_tsmp}-{to_tsmp}'))
+    Plot(pays, area_plot='today')

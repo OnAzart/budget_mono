@@ -100,7 +100,7 @@ def process_text(message):
 
 @bot.callback_query_handler(lambda call: True)
 def process_callback(call):
-    area, action, data = call.data.split(';')
+    area, action, data, day_unit = call.data.split(';')
     user = UserTools(chat_id=call.message.chat.id)
     if area == 'card':  # change activeness of cards
         if action == 'change':
@@ -120,7 +120,7 @@ def process_callback(call):
         # cid, from_tmsp, to_tsmp = data.split('-')
         print(data)
         payments = loads(data_object.get_from_redis(data))
-        list_of_paths_to_images = Plot(payments, category=True).get_plots_paths()
+        list_of_paths_to_images = Plot(payments, category=True, area_plot=day_unit).get_plots_paths()
         media = [InputMediaPhoto(open(image, 'rb')) for image in list_of_paths_to_images]
         bot.edit_message_reply_markup(message_id=call.message.id, chat_id=call.message.chat.id,
                                       reply_markup=InlineKeyboardMarkup())
