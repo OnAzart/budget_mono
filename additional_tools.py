@@ -1,5 +1,7 @@
 from configparser import ConfigParser
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pytz import timezone
 from os import getcwd
 from os.path import expanduser, join
 from babel.dates import format_datetime
@@ -39,17 +41,29 @@ but1 = KeyboardButton(keyboard_list[0])
 but2 = KeyboardButton(keyboard_list[1])
 but3 = KeyboardButton(keyboard_list[2])
 but4 = KeyboardButton(keyboard_list[3])
+but5 = KeyboardButton('За вибрані дати')
 
 main_markup.add(but1, but2)
-main_markup.add(but3, but4)
+main_markup.add(but3, but5)
+main_markup.add(but4)
+
+
+@dataclass
+class CallbackMono:
+    """ callback = area; action; data; day_unit
+    Ex: """
+    area: str      # card, push, details
+    action: str    # change, done
+    data: str      # proceed, token
+    day_unit: str  # today, week, month
+
+    def __str__(self):
+        return ';'.join([self.area, self.action, self.data, self.day_unit])
 
 
 def take_now() -> datetime:
-    if 'nazartutyn' in getcwd():
-        hours_delta = 0
-    else:
-        hours_delta = 3
-    return datetime.now() + timedelta(hours=hours_delta)
+    ua_timezone = timezone('Europe/Kiev')
+    return datetime.now(ua_timezone).replace(tzinfo=None)
 
 
 def take_start_of_dateunit(unit: str = 'today') -> str:
@@ -60,7 +74,8 @@ def take_start_of_dateunit(unit: str = 'today') -> str:
         print(this_day_start)
         return str(int(this_day_start.timestamp()))
     elif unit == 'week':
-        this_week_start = today - timedelta(today.weekday())
+        week_start_day = today - timedelta(today.weekday())
+        this_week_start = datetime(year=week_start_day.year, month=week_start_day.month, day=week_start_day.day)
         print(this_week_start)
         return str(int(this_week_start.timestamp()))
     elif unit == 'month':
@@ -104,6 +119,7 @@ def form_profile_markup(user_db):
 
 def form_cards_markup(chat_id, proceed):
     from data import retrieve_all_cards_of_user
+    callback_list = [''] * 4
     cards_info = retrieve_all_cards_of_user(chat_id)
     if not cards_info:
         from data import UserTools
@@ -117,13 +133,14 @@ def form_cards_markup(chat_id, proceed):
         card_preview, type, currency_code, id = card_info.card_preview, card_info.type, card_info.currencyCode, card_info._id
         checked = "✅" if card_info.is_active else ""
         button_text = f"{checked} {type.title()} {card_preview[-6:]} {currencies[currency_code]} {checked}"
-        button = InlineKeyboardButton(text=button_text, callback_data=f"card;change;{id}")
+        callback_list[0:3] = 'card', 'change', id
+        button = InlineKeyboardButton(text=button_text, callback_data=';'.join(callback_list))
         cards_markup.add(button)
     if is_at_least_one_card_chosen(cards_info):
-        callback_message = "card;done;"
+        callback_list[0:2] = 'card', 'done'
         if proceed:
-            callback_message += 'proceed'
-        final_button = InlineKeyboardButton(text="Далі —>", callback_data=callback_message)
+            callback_list[2] = 'proceed'
+        final_button = InlineKeyboardButton(text="Далі —>", callback_data=';'.join(callback_list))
         cards_markup.add(final_button)
     return cards_markup
 

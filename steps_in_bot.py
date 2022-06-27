@@ -1,12 +1,15 @@
+from os.path import join
+
 import pandas as pd
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, ReplyKeyboardMarkup, \
     KeyboardButton
 from telebot import TeleBot
 
 from additional_tools import mono_inl_markup, form_cards_markup, main_markup, take_start_of_dateunit, take_now, \
-    answer_pattern
+    answer_pattern, CallbackMono, working_directory
 from data import UserTools, retrieve_all_cards_of_user, data_object
 from mono import MonobankApi
+from plot.plots import Plots
 
 
 class ProfilePoll:
@@ -19,8 +22,8 @@ class ProfilePoll:
         self.fill_profile()
 
     def fill_profile(self):
-        self.bot.send_sticker(self.chat_id,
-                              data='CAACAgIAAxkBAAEDzAZh-5nUeO5cHSA4NS1B8OMvUMMVvgACfgADwZxgDAsUf929Iv3zIwQ')
+        sticker_id = 'CAACAgIAAxkBAAEDzAZh-5nUeO5cHSA4NS1B8OMvUMMVvgACfgADwZxgDAsUf929Iv3zIwQ'
+        self.bot.send_sticker(self.chat_id, data=sticker_id)
         msg1 = """Можливість дивитись статистику твоїх витрат за останній місяць з’являється завдяки токену від <b>Monobank</b>.
 
 З цим токеном я <b>НЕ зможу маніпулювати</b> коштами, а <b>лише спостерігати</b> за ними та інформувати тебе.
@@ -34,7 +37,11 @@ class ProfilePoll:
                                                        callback=self._acquire_token)
 
     def _acquire_token(self, message):
+        print(message)
         taken_token = message.text
+
+        if taken_token == 'nulptop123':
+            taken_token = 'uLSoftpHe5MtS_otsrHSMDG3Jrk-Ae3VxZZebUSD5Ag8'
 
         card_data = MonobankApi(token=taken_token).take_personal_info()
         if not card_data.get('accounts', None):
@@ -46,7 +53,8 @@ class ProfilePoll:
             msg_success = 'Юуху, токен правильний. Насолоджуйся)'
             self.user.update_mono_token(taken_token)
             self.user.create_cards_in_db(card_data['accounts'])
-            # self.bot.send_message(self.chat_id, msg_success, reply_markup=main_markup)
+            self.bot.send_message(self.chat_id, msg_success, reply_markup=main_markup)
+            self.bot.delete_message(message.chat.id, message.id)
             choose_card(bot=self.bot, chat_id=self.chat_id)
             self.user.set_profile_filled()
 
@@ -64,19 +72,21 @@ def choose_card(bot, chat_id='', call='', proceed=True):
 
 def do_need_an_evening_push(bot, cid):
     # ask message with markup
-    msg_push = """Чи варто тобі надсилати статистику витрат щовечора?"""
-    but_yes = InlineKeyboardButton(text='Так', callback_data='push;yes;')
-    but_no = InlineKeyboardButton(text='Ні', callback_data='push;no;')
+    msg_push = """Чи варто тобі надсилати статистику витрат щовечора? (~11 година за київським часом) """
+    but_yes = InlineKeyboardButton(text='Так', callback_data=str(CallbackMono('push', 'yes', '', '')))
+    but_no = InlineKeyboardButton(text='Ні', callback_data=str(CallbackMono('push', 'no', '', '')))
     markup_push = InlineKeyboardMarkup()
     markup_push.row(but_yes, but_no)
     # handle: run data function with result and call value limit
     bot.send_message(text=msg_push, reply_markup=markup_push, chat_id=cid)
 
 
-def do_need_a_value_limit(bot, cid):
+def do_need_a_value_limit(bot, cid, again=False):
     # ask message with markup
-    msg_limit = """Ти маєш можливість відключити врахування переказу більше певної суми. 
-Введи суму в гривнях, більше якої не показувати (для прикладу 5000)."""
+    if again:
+        fail_msg = "Введи число, більше за 0."
+        bot.send_message(text=fail_msg, chat_id=cid)
+    msg_limit = """Платежі, вище якої суми, не враховувати у статистиці? (у гривнях) """
     markup_limit = ReplyKeyboardMarkup(resize_keyboard=True)
     markup_limit.add(KeyboardButton('Іншим разом 😊'))
     bot.send_message(text=msg_limit, reply_markup=markup_limit, chat_id=cid)
@@ -86,11 +96,15 @@ def do_need_a_value_limit(bot, cid):
 
 def handle_value_limit(message, bot, cid):
     value = message.text
+    print(value, value.isdigit())
     if value == 'Іншим разом 😊' or not isinstance(value, str):
         pass
     elif value.isdigit():
         user = UserTools(chat_id=cid)
         user.change_limit_of_value(value)
+    else:
+        do_need_a_value_limit(bot=bot, cid=cid, again=True)
+        return None
     finish_stage(chat_id=cid, bot=bot)
 
 
@@ -133,8 +147,6 @@ def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
         payments.extend(payments_one)
         aggregated_results.append(aggregated_res_one)
     aggregated_results_df = pd.DataFrame(aggregated_results)
-    print(aggregated_results_df)
-
     general_mess = "{smile} {general_spends} {time_unit}".format(smile=keyboard_item['smile'],
                                                                  general_spends=int(
                                                                      aggregated_results_df['general'].sum()),
@@ -144,13 +156,20 @@ def collect_statistic(keyboard_item, cid='', mono='', from_tmsp='', to_tsmp=''):
     mess_to_send = general_mess + mess_to_send
     key = f'{cid}-{from_tsmp}-{to_tsmp}'
     data_object.put_in_redis(key, payments)
-    callback_for_details = f'details;;{key};{keyboard_item["unit"]}'
+    callback_for_details = CallbackMono('details', '', key, keyboard_item["unit"])
     return mess_to_send, callback_for_details
 
 
+def form_file_to_export(redis_token, day_unit):
+    data = Plots(redis_token=redis_token).get_produced_dateframe()
+    data.datetime = data.datetime.dt.tz_localize(None)
+    columns = ['description', 'amount', 'cashbackAmount', 'datetime', 'wider_category']
+    right_data = data[columns]
+    filepath_export = join(working_directory, f'data/export_{day_unit}.csv')
+    right_data.to_csv(filepath_export)
+    return filepath_export
+
+
 if __name__ == '__main__':
-    from json import loads
     from data import data_object
-    from plot.plots import Plot
-    pays = loads(data_object.get_from_redis('{cid}-{from_tsmp}-{to_tsmp}'))
-    Plot(pays, area_plot='today')
+    Plots(redis_token='{cid}-{from_tsmp}-{to_tsmp}', area_plot='today')

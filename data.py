@@ -11,6 +11,7 @@ config = take_creds()
 
 class Data:
     """ Manage MongoDB connection """
+
     def __init__(self):
         self.redis = None
         self.mongo = None
@@ -65,10 +66,23 @@ class UserTools:
     def __init__(self, **kwargs):
         if kwargs.get('user', None):
             self.user_db = kwargs['user']  # TO_IMPROVE (is it valid)
-        else: # add if only chat_id exist (or name, nickname)
-            self.user_db = _handle_user(**kwargs)  # return User table object
+        else:  # add if only chat_id exist (or name, nickname)
+            self.user_db = self._handle_user(**kwargs)  # return User table object
         self.is_profile_filled = True if self.user_db.monobank_token else False
         self.mono = MonobankApi(self.user_db.monobank_token) if self.is_profile_filled else False
+
+    def _handle_user(self, **kwargs):
+        """ Find or create user """
+        user = User.objects.filter(chat_id=kwargs['chat_id'])
+        kwargs = dict(kwargs)
+        if not len(user):
+            registered_at = take_now()
+            user = User(**kwargs, registered_at=registered_at)
+            print(user.name)
+            user.save()
+        else:
+            user = user[0]
+        return user
 
     def update_mono_token(self, token):
         self.user_db.monobank_token = token
@@ -103,7 +117,7 @@ class UserTools:
             card_item = Cards(**right_card)
             card_item.save()
 
-    def is_minute_passed(self):
+    def is_minute_since_activity_passed(self):
         return (take_now() - self.user_db.last_send_at).total_seconds() > 59
 
 
@@ -138,7 +152,10 @@ class Category(me.Document):
         'indexes': ['mcc']
     }
 
-    # ___________________________________________________
+# ___________________________________________________
+
+
+#  ___________________________________________________
 
 
 def change_activity_of_card(id):
@@ -161,20 +178,6 @@ def retrieve_all_users_from_db() -> List[User]:
     users = User.objects
     users = [user for user in users if user.monobank_token]
     return users
-
-
-def _handle_user(**kwargs) -> User:
-    """ Find or create user """
-    user = User.objects.filter(chat_id=kwargs['chat_id'])
-    kwargs = dict(kwargs)
-    if not len(user):
-        registered_at = take_now()
-        user = User(**kwargs, registered_at=registered_at)
-        print(user.name)
-        user.save()
-    else:
-        user = user[0]
-    return user
 
 
 if __name__ == '__main__':
