@@ -3,10 +3,11 @@ from time import sleep
 from traceback import format_exc
 
 import telebot
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from additional_tools import take_creds
-from data import retrieve_users_from_db, Data, update_user_send_time
-from mono import statistic_for_period
+from additional_tools import take_creds, keyboard_dict
+from data import retrieve_all_users_from_db, Data, UserTools
+from steps_in_bot import collect_statistic
 
 
 config = take_creds()
@@ -17,31 +18,35 @@ bot = telebot.TeleBot(TOKEN)
 data = Data()
 
 
-def send_group_statistic(chat_id, token):
-    result_spends = statistic_for_period(unit='today', sign='+-', token=token)
-    sleep(10)
-    # together_sum_today = str(int(float(positive_sum_today) + float(negative_sum_today)))
-    result_spends_week = statistic_for_period(unit='week', token=token)
+def send_group_statistic(user):
+    mono = user.mono
+    mess_to_send, callback_details = collect_statistic(keyboard_item=keyboard_dict['За сьогодні'], cid=user.user_db.chat_id, mono=mono)
+    details_but = InlineKeyboardButton(text='Детальніше', callback_data=callback_details)
+    details_markup = InlineKeyboardMarkup().add(details_but)
+    bot.send_message(user.user_db.chat_id, mess_to_send, parse_mode='html', reply_markup=details_markup)
+    user.update_user_send_time()
 
-    mess_to_send = f"💰 {'+' if int(float(result_spends['general'])) > 0 else ''}{result_spends['general']} " \
-                   f"грн за сьогодні 💰" \
-                   f"\nКишенькові Витрати: {result_spends.get('negative_pocket', 0)} грн" \
-                   f"\nБільші Витрати: {result_spends.get('negative_major',0)} грн" \
-                   f"\nНадходження: {result_spends.get('positive')} грн" \
-                   f"\n\nЗагалом цього тижня: {result_spends_week.get('general')} грн"
-    bot.send_message(chat_id, mess_to_send, parse_mode='html')
+
+def do_smth():
+    users = retrieve_all_users_from_db()
+    for i in range(len(users)):
+        user_tool = UserTools(user=users[i])
+        user_tool.user_db.need_evening_push = True
+        user_tool.user_db.save()
 
 
 def main():
-    users = retrieve_users_from_db()
+    users = retrieve_all_users_from_db()
+    send_number = 0
     for i in range(len(users)):
-        cid = users[i].chat_id
-        mono_token = users[i].monobank_token
-        print(users[i].name, cid)
-        send_group_statistic(cid, mono_token)
-        update_user_send_time(cid)
-        sleep(60)
-    print(f'Відправлено статистику для {len(users)}.')
+        user_tool = UserTools(user=users[i])
+        if user_tool.user_db.need_evening_push:
+            send_group_statistic(user_tool)
+            user_tool.update_user_send_time()
+            send_number += 1
+            sleep(60)
+    bot.send_message(chat_id=549537340, text=f'Відправлено статистику для {send_number} людішок.')
+    print(f'Відправлено статистику для {send_number} людішок.')
     # send big spends separately
 
 
