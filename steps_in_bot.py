@@ -23,7 +23,7 @@ class ProfilePoll:
 
     def fill_profile(self):
         sticker_id = 'CAACAgIAAxkBAAEDzAZh-5nUeO5cHSA4NS1B8OMvUMMVvgACfgADwZxgDAsUf929Iv3zIwQ'
-        self.bot.send_sticker(self.chat_id, data=sticker_id)
+        self.bot.send_sticker(chat_id=self.chat_id, sticker=sticker_id)
         msg1 = """Можливість дивитись статистику твоїх витрат за останній місяць з’являється завдяки токену від <b>Monobank</b>.
 
 З цим токеном я <b>НЕ зможу маніпулювати</b> коштами, а <b>лише спостерігати</b> за ними та інформувати тебе.

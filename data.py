@@ -118,6 +118,7 @@ class UserTools:
             card_item.save()
 
     def is_minute_since_activity_passed(self):
+        print(self.user_db.last_send_at)
         return (take_now() - self.user_db.last_send_at).total_seconds() > 59
 
 

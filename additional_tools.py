@@ -10,8 +10,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 
 # GLOBAL VARIABLES USED IN PROJECT
 
-working_directory = '/home/azureuser/projects/budget_mono' if not 'nazartutyn' in getcwd() \
-    else '/Users/nazartutyn/PycharmProjects/budget_mono'
+working_directory = getcwd()
 
 keyboard_dict = {'За сьогодні': {'unit': 'today', 'ukr_str': 'cьогодні', 'smile': '🌝'},
                  'За тиждень': {'unit': 'week', 'ukr_str': 'з початку тижня', 'smile': '🌛'},
@@ -85,12 +84,8 @@ def take_start_of_dateunit(unit: str = 'today') -> str:
 
 
 def take_creds() -> ConfigParser:
-    if 'nazar' in expanduser('~'):
-        main_path = '/Users/nazartutyn/PycharmProjects/budget_mono'
-    else:
-        main_path = expanduser('~') + '/projects/budget_mono'
     config = ConfigParser()
-    config.read(join(main_path, 'tokens.ini'))
+    config.read(join(getcwd(), 'config.ini'))
     return config
 
 
