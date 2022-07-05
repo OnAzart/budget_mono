@@ -140,9 +140,8 @@ def process_callback(call):
         file_to_send = form_file_to_export(redis_token=data, day_unit=day_unit)
         # bot.edit_message_reply_markup(message_id=call.message.id, chat_id=call.message.chat.id,
         #                               reply_markup=InlineKeyboardMarkup())
-        bot.send_document(chat_id=call.message.chat.id, data=open(file_to_send, 'rb'),
+        bot.send_document(chat_id=call.message.chat.id, document=open(file_to_send, 'rb'),
                           reply_to_message_id=call.message.id)
-
 
 
 if __name__ == '__main__':
